@@ -39,8 +39,8 @@ leave-management/
 │   └── schema.cds
 │
 ├── srv/
-│   ├── leave-service.cds
-│   └── leave-service.js
+│   ├── service.cds
+│   └── service.js
 │
 ├── package.json
 ├── xs-security.json
