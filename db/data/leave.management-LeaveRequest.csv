@@ -1,0 +1,6 @@
+ID,LeaveID,StartDate,EndDate,Reason,Status,AppliedOn,employee_ID,createdAt,createdBy,modifiedAt,modifiedBy
+23682088-57a0-47e2-b3b4-c9080850d857,LV1001,2025-06-10,2025-06-15,Family Vacation,Approved,2025-05-01,1382980b-7608-4be5-ab15-cdd2c3a7f202,2025-05-01T09:00:00.000Z,vikram.deshmukh@company.com,2025-05-03T11:20:00.000Z,hr@company.com
+2368209b-b2e1-466c-8c81-06779ef1409c,LV1002,2025-07-05,2025-07-07,Medical Leave,Pending,2025-05-12,1382977c-15e2-4046-aab3-93ffa1cae009,2025-05-12T14:10:00.000Z,priya.verma@company.com,2025-05-12T14:10:00.000Z,priya.verma@company.com
+2368210f-7ab4-404e-b219-1d9d63c8f514,LV1003,2025-08-01,2025-08-03,Personal Work,Rejected,2025-05-15,13829784-dfa5-4dd0-900f-62eff2acafcf,2025-05-15T08:45:00.000Z,amit.kulkarni@company.com,2025-05-16T10:30:00.000Z,manager@company.com
+2368211e-22d6-401f-b470-8b1300069600,LV1004,2025-09-20,2025-09-25,Wedding Ceremony,Approved,2025-05-18,13829799-81a4-47f0-9c6d-de28647a139b,2025-05-18T12:00:00.000Z,neha.patil@company.com,2025-05-19T09:40:00.000Z,hr@company.com
+2368212d-8f51-4e47-8479-0010f89fab19,LV1005,2025-10-11,2025-10-14,Festival Celebration,Pending,2025-05-19,13829769-36c4-4e19-be07-07c72a37c609,2025-05-19T07:30:00.000Z,rajesh.sharma@company.com,2025-05-19T07:30:00.000Z,rajesh.sharma@company.com
