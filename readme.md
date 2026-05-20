@@ -1,6 +1,6 @@
 # Leave Management System Documentation
 
-## Project Overview
+# Project Overview
 
 Simple Leave Management Backend Application using the SAP Cloud Application Programming Model (CAP) on SAP BTP. The application allows employees to apply for leave and enables administrators/managers to approve or reject leave requests.
 
@@ -10,8 +10,9 @@ The application demonstrates:
 * Custom Event Handlers
 * Actions and Functions
 * Validation Logic
-* Role-Based Authorization (yet to complete)
+* HTTP Request Handling
 * SAP HANA Cloud Integration
+* XSUAA Authentication & Authorization
 
 ---
 
@@ -36,7 +37,8 @@ leave-management/
 │
 ├── app/
 ├── db/
-│   └── schema.cds
+│   ├── schema.cds
+│   └── data/
 │
 ├── srv/
 │   ├── service.cds
@@ -45,33 +47,37 @@ leave-management/
 ├── package.json
 ├── xs-security.json
 ├── mta.yaml
-└── test.http
+├── test.http
+└── README.md
 ```
 
 ---
 
 # Functional Requirements
 
-The application supports the following functionalities:
-
 ## Employee Management
 
-* Create Employees
-* View Employees
+* Create employees
+* View employees
+* Validate unique employees
 
 ## Leave Management
 
 * Apply for leave
 * Update leave requests
-* Approve leave requests (Admin)
-* Reject leave requests (Admin)
+* Approve leave requests
+* Reject leave requests
+* Change leave status dynamically
 * Fetch pending leave requests
+* Fetch leave requests for a particular employee
 
 ## Validation Logic
 
+* Employee existence validation
 * Mandatory reason validation
 * End date validation
-* Unique employee validation
+* Duplicate employee prevention
+* Invalid leave request handling
 
 ---
 
@@ -82,8 +88,6 @@ The application supports the following functionalities:
 ```cds
 namespace leave.management;
 ```
-
-The namespace uniquely identifies CDS artifacts and prevents naming conflicts.
 
 ---
 
@@ -97,27 +101,18 @@ entity Employee : cuid, managed
 
 ### Features Used
 
-* `cuid`
-
-  * Automatically generates UUID primary key (`ID`)
-* `managed`
-
-  * Automatically maintains:
-
-    * createdAt
-    * createdBy
-    * modifiedAt
-    * modifiedBy
+* `cuid` → Automatically generates UUID primary key (`ID`)
+* `managed` → Automatically maintains audit fields
 
 ### Fields
 
-| Field      | Type        | Description                |
-| ---------- | ----------- | -------------------------- |
-| EmployeeID | String(20)  | Unique employee identifier |
-| Name       | String(100) | Employee name              |
-| Email      | String(100) | Employee email             |
-| Department | String(100) | Employee department        |
-| Role       | String(20)  | Employee role              |
+| Field      | Type        |
+| ---------- | ----------- |
+| EmployeeID | String(20)  |
+| Name       | String(100) |
+| Email      | String(100) |
+| Department | String(100) |
+| Role       | String(20)  |
 
 ---
 
@@ -129,14 +124,15 @@ entity LeaveRequest : cuid, managed
 
 ### Fields
 
-| Field     | Type        | Description              |
-| --------- | ----------- | ------------------------ |
-| LeaveID   | String(20)  | Leave request identifier |
-| StartDate | Date        | Leave start date         |
-| EndDate   | Date        | Leave end date           |
-| Reason    | String(500) | Reason for leave         |
-| Status    | LeaveStatus | Leave status             |
-| AppliedOn | Date        | Application date         |
+| Field     | Type        |
+| --------- | ----------- |
+| LeaveID   | String(20)  |
+| StartDate | Date        |
+| EndDate   | Date        |
+| Reason    | String(500) |
+| Status    | LeaveStatus |
+| AppliedOn | Date        |
+| employee  | Association |
 
 ---
 
@@ -152,29 +148,18 @@ type LeaveStatus : String enum {
 }
 ```
 
-Used to restrict leave status values.
-
 ---
 
-# Association
-
-## Employee → LeaveRequest
+# Composition Relationship
 
 ```cds
-leaveRequests : Association to many LeaveRequest
+leaveRequests : Composition of many LeaveRequest
     on leaveRequests.employee = $self;
 ```
 
-### Relationship
+Composition is used because LeaveRequest is lifecycle-dependent on Employee.
 
-One employee can have multiple leave requests.
-
-### Why Association?
-
-Association is used because:
-
-* Employee and LeaveRequest can exist independently.
-* Loose coupling exists between entities.
+If an employee is deleted, associated leave requests are also deleted.
 
 ---
 
@@ -183,24 +168,27 @@ Association is used because:
 ## Service Definition
 
 ```cds
-service LeaveManagementService
+service LeaveManagementService {
+
+    entity Employees     as projection on db.Employee;
+    entity LeaveRequests as projection on db.LeaveRequest;
+
+    action approveLeave(leaveID: String) returns String;
+
+    action rejectLeave(leaveID: String) returns String;
+
+    action changeLeaveStatus(
+        leaveID : String,
+        status  : String
+    ) returns String;
+
+    function getPendingLeaves()
+        returns array of LeaveRequests;
+
+    function getEmployeeLeaves(employeeID : String)
+        returns array of LeaveRequests;
+}
 ```
-
-The service exposes OData APIs for:
-
-* Employees
-* Leave Requests
-* Actions
-* Functions
-
----
-
-# Exposed Entities
-
-| Entity        | Purpose                  |
-| ------------- | ------------------------ |
-| Employees     | Employee operations      |
-| LeaveRequests | Leave request operations |
 
 ---
 
@@ -208,156 +196,120 @@ The service exposes OData APIs for:
 
 ## approveLeave()
 
-Approves a leave request.
-
-### Input
-
 ```json
 {
-  "leaveID": "L001"
+  "leaveID": "LV1002"
 }
-```
-
-### Output
-
-```text
-Leave L001 approved
 ```
 
 ---
 
 ## rejectLeave()
 
-Rejects a leave request.
-
-### Input
-
 ```json
 {
-  "leaveID": "L001"
+  "leaveID": "LV1005"
 }
 ```
 
 ---
 
-# Custom Function
+## changeLeaveStatus()
+
+```json
+{
+  "leaveID": "LV1002",
+  "status": "Rejected"
+}
+```
+
+Supported Status Values:
+
+* Pending
+* Approved
+* Rejected
+
+---
+
+# Custom Functions
 
 ## getPendingLeaves()
 
-Returns all leave requests having status:
+Returns all pending leave requests.
 
-```text
-Pending
+---
+
+## getEmployeeLeaves()
+
+```http
+GET /getEmployeeLeaves(employeeID='EMP1001')
 ```
+
+Returns all leave requests for a particular employee.
 
 ---
 
 # Event Handlers
 
-The application implements custom business logic using CAP event handlers.
+## LeaveRequest Validation
+
+### Employee Validation
+
+```javascript
+if (!employeeID)
+```
+
+Ensures every leave request belongs to an employee.
 
 ---
 
-# Before Handlers
-
-## LeaveRequest Validation
-
-### Validation 1 — Date Validation
+### Employee Existence Check
 
 ```javascript
-if (new Date(data.EndDate) < new Date(data.StartDate))
+const employeeExists = await SELECT.one
 ```
 
-### Purpose
+Ensures leave requests cannot be created for invalid employees.
+
+---
+
+### Date Validation
+
+```javascript
+if (new Date(endDate) < new Date(startDate))
+```
 
 Ensures leave end date is not earlier than start date.
 
 ---
 
-## Validation 2 — Mandatory Reason
+### Mandatory Reason Validation
 
 ```javascript
-if (!data.Reason || data.Reason.trim() === '')
+if (!reason || reason.trim() === '')
 ```
-
-### Purpose
 
 Ensures leave reason is mandatory.
 
 ---
 
-## Employee Uniqueness Validation
+### Unique Employee Validation
 
 ```javascript
 const existingEmployee = await SELECT.one
 ```
 
-### Purpose
-
 Prevents duplicate employee records.
 
 ---
 
-# After Handler
+# PATCH Request Handling
 
-## Auto Status Update
-
-```javascript
-.set({ Status: 'Pending' })
+```http
+PATCH /LeaveRequests(<UUID>)
 ```
 
-### Purpose
-
-Automatically sets leave request status to:
-
-```text
-Pending
-```
-
-after successful creation.
-
----
-
-# Actions Implementation
-
-## Approve Leave
-
-```javascript
-this.on('approveLeave', async (req) => {
-```
-
-### Logic
-
-* Checks leave existence
-* Updates status to Approved
-
----
-
-## Reject Leave
-
-```javascript
-this.on('rejectLeave', async (req) => {
-```
-
-### Logic
-
-* Validates leave request existence
-* Updates status to Rejected
-
----
-
-# Function Implementation
-
-## Get Pending Leaves
-
-```javascript
-SELECT.from(LeaveRequests)
-    .where({ Status: 'Pending' });
-```
-
-### Purpose
-
-Returns only pending leave requests.
+Supports partial updates while preserving existing data validations.
 
 ---
 
@@ -391,11 +343,11 @@ POST /Employees
 
 ```json
 {
-  "EmployeeID": "EMP106",
+  "EmployeeID": "EMP1006",
   "Name": "Vishal Chavan",
   "Email": "vishal@test.com",
   "Department": "IT",
-  "Role": "User"
+  "Role": "Employee"
 }
 ```
 
@@ -413,12 +365,28 @@ POST /LeaveRequests
 
 ```json
 {
-  "LeaveID": "L001",
-  "StartDate": "2026-05-20",
-  "EndDate": "2026-05-22",
+  "LeaveID": "LV1006",
+  "StartDate": "2026-06-20",
+  "EndDate": "2026-06-22",
   "Reason": "Medical Leave",
-  "AppliedOn": "2026-05-19",
-  "employee_ID": "<employee-guid>"
+  "AppliedOn": "2026-06-15",
+  "employee_ID": "13829769-36c4-4e19-be07-07c72a37c609"
+}
+```
+
+---
+
+## Update Leave Request
+
+```http
+PATCH /LeaveRequests(<UUID>)
+```
+
+### Sample Payload
+
+```json
+{
+  "Reason": "Updated medical leave reason"
 }
 ```
 
@@ -446,6 +414,16 @@ EndDate cannot be earlier than StartDate
 
 ---
 
+## Invalid Employee Validation
+
+Expected:
+
+```text
+Employee not found
+```
+
+---
+
 # Action APIs
 
 ## Approve Leave
@@ -464,12 +442,28 @@ POST /rejectLeave
 
 ---
 
-# Function API
+## Change Leave Status
+
+```http
+POST /changeLeaveStatus
+```
+
+---
+
+# Function APIs
 
 ## Get Pending Leaves
 
 ```http
 GET /getPendingLeaves()
+```
+
+---
+
+## Get Employee Leaves
+
+```http
+GET /getEmployeeLeaves(employeeID='EMP1001')
 ```
 
 ---
@@ -482,33 +476,18 @@ The application uses XSUAA for authentication and role-based authorization.
 
 # Roles
 
-| Role  | Permissions                    |
-| ----- | ------------------------------ |
-| User  | Create and view leave requests |
-| Admin | Approve/reject leave requests  |
-
----
-
-# xs-security.json
-
-Defines:
-
-* scopes
-* role templates
-* authorization model
+| Role     | Permissions                    |
+| -------- | ------------------------------ |
+| Employee | Create and view leave requests |
+| Admin    | Approve/reject leave requests  |
 
 ---
 
 # SAP HANA Cloud Integration
 
-The application is deployed to:
-
-* SAP HANA Cloud
-* HDI Container
+The application is deployed to SAP HANA Cloud using an HDI Container.
 
 ### Database Binding
-
-Local CAP service is connected to HANA using:
 
 ```bash
 cds bind --to <hdi-container>
@@ -544,20 +523,23 @@ cf deploy mta_archives/leave-management_1.0.0.mtar
 
 # Challenges Faced
 
-| Challenge                 | Solution                              |
-| ------------------------- | ------------------------------------- |
-| CAP route mismatch        | Used actual generated OData path      |
-| Authorization issues      | Configured XSUAA roles correctly      |
-| Local HANA binding        | Used cds bind                         |
+| Challenge                       | Solution                                            |
+| ------------------------------- | --------------------------------------------------- |
+| Authorization issues            | Configured XSUAA roles correctly                    |
+| Local HANA binding              | Used cds bind                                       |
+| PATCH request validation issues | Merged existing DB data with incoming PATCH payload |
+| Composition lifecycle handling  | Replaced associations with composition              |
 
 ---
 
 # Learnings
 
-* Understanding CAP architecture
-* CDS modeling concepts
-* OData service generation
+* SAP CAP architecture
+* CDS entity modeling
+* Composition vs Association
 * Event-driven validation
-* Actions and functions
-* XSUAA integration
-* SAP HANA Cloud deployment
+* HTTP request handling
+* CAP actions and functions
+* Business validation implementation
+* SAP HANA Cloud integration
+* XSUAA authentication

@@ -12,7 +12,8 @@ entity Employee : cuid, managed {
     Email         : String(100);
     Department    : String(100);
     Role          : String(20);
-    leaveRequests : Association to many LeaveRequest
+
+    leaveRequests : Composition of many LeaveRequest
                         on leaveRequests.employee = $self;
 }
 
@@ -23,11 +24,13 @@ type LeaveStatus : String enum {
 }
 
 entity LeaveRequest : cuid, managed {
+
     LeaveID   : String(20);
     StartDate : Date @title: 'Start Date';
     EndDate   : Date @title: 'End Date';
     Reason    : String(500);
-    Status    : LeaveStatus;
+    Status    : LeaveStatus default 'Pending';
     AppliedOn : Date @title: 'Applied On';
-    employee  : Association to Employee;
+
+    employee  : Association to Employee not null;
 }

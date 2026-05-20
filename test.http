@@ -1,89 +1,116 @@
-### GET All Employees
+### GET ALL EMPLOYEES
 GET http://localhost:4004/odata/v4/leave-management/Employees
 Content-Type: application/json
 
-### Create User Employees
+### CREATE USER EMPLOYEE
 POST http://localhost:4004/odata/v4/leave-management/Employees
 Content-Type: application/json
 
 {
-  "EmployeeID": "EMP106",
-  "Name": "Vishal Chavan",
+  "EmployeeID": "EMP1008",
+  "Name": "Vishal",
   "Email": "vishal@test.com",
   "Department": "IT",
-  "Role": "User"
+  "Role": "Employee"
 }
 
-### Create Admin Employee
+### CREATE DUPLICATE EMPLOYEE
 POST http://localhost:4004/odata/v4/leave-management/Employees
 Content-Type: application/json
 
 {
-  "EmployeeID": "EMP1",
+  "EmployeeID": "EMP1008",
+  "Name": "Vishal",
+  "Email": "vishal@test.com",
+  "Department": "IT",
+  "Role": "Employee"
+}
+
+### CREATE ADMIN EMPLOYEE
+POST http://localhost:4004/odata/v4/leave-management/Employees
+Content-Type: application/json
+
+{
+  "EmployeeID": "EMP1007",
   "Name": "Saumya",
   "Email": "saumya@test.com",
   "Department": "HR",
   "Role": "Admin"
 }
 
-### 4. Get All Leave Requests
+### GET PENDING LEAVES
 GET http://localhost:4004/odata/v4/leave-management/getPendingLeaves()
 Content-Type: application/json
 
-### Create Leave Request
+### CREATE LEAVE REQUEST
 POST http://localhost:4004/odata/v4/leave-management/LeaveRequests
 Content-Type: application/json
 
 {
-  "LeaveID": "L001",
-  "StartDate": "2026-05-20",
-  "EndDate": "2026-05-22",
+  "LeaveID": "LV1008",
+  "StartDate": "2026-06-20",
+  "EndDate": "2026-06-22",
   "Reason": "Medical Leave",
-  "AppliedOn": "2026-05-19",
-  "employee_ID": "EMP1001"
+  "AppliedOn": "2026-06-15",
+  "employee_ID": "13829769-36c4-4e19-be07-07c72a37c609"
 }
 
-### Create Leave Request without Reason
+### CREATE LEAVE REQUEST WITH SAME LEAVEID
 POST http://localhost:4004/odata/v4/leave-management/LeaveRequests
 Content-Type: application/json
 
 {
-  "LeaveID": "L001",
-  "StartDate": "2026-05-20",
-  "EndDate": "2026-05-22",
+  "LeaveID": "LV1008",
+  "StartDate": "2026-06-20",
+  "EndDate": "2026-06-22",
+  "Reason": "Medical Leave",
+  "AppliedOn": "2026-06-15",
+  "employee_ID": "13829769-36c4-4e19-be07-07c72a37c609"
+}
+
+### CREATE LEAVE REQUEST WITHOUT REASON
+POST http://localhost:4004/odata/v4/leave-management/LeaveRequests
+Content-Type: application/json
+
+{
+  "LeaveID": "LV1009",
+  "StartDate": "2026-06-20",
+  "EndDate": "2026-06-22",
   "Reason": "",
-  "AppliedOn": "2026-05-19",
-  "employee_ID": "EMP1001"
+  "AppliedOn": "2026-06-15",
+  "employee_ID": "13829769-36c4-4e19-be07-07c72a37c609"
 }
 
-### Update Leave Request
-PATCH http://localhost:4004/odata/v4/leave-management/LeaveRequests(L001)
-{
-  "Reason": "Updated reason"
-}
-
-### Create Leave Request with wrong Dates
+### CREATE LEAVE REQUEST WITH WRONG DATES
 POST http://localhost:4004/odata/v4/leave-management/LeaveRequests
 Content-Type: application/json
 
 {
-  "LeaveID": "L001",
-  "StartDate": "2026-05-22",
-  "EndDate": "2026-05-20",
-  "Reason": "Medical Leave",
-  "AppliedOn": "2026-05-19",
-  "employee_ID": "EMP1001"
+  "LeaveID": "LV1009",
+  "StartDate": "2026-06-25",
+  "EndDate": "2026-06-20",
+  "Reason": "Invalid Dates Test",
+  "AppliedOn": "2026-06-15",
+  "employee_ID": "13829769-36c4-4e19-be07-07c72a37c609"
 }
 
-### Approve Leave Request
+### UPDATE LEAVE REQUEST
+PATCH http://localhost:4004/odata/v4/leave-management/LeaveRequests(2368209b-b2e1-466c-8c81-06779ef1409c)
+Content-Type: application/json
+
+{
+  "Reason": "Updated medical leave reason"
+}
+
+### APPROVE LEAVE REQUEST
 POST http://localhost:4004/odata/v4/leave-management/approveLeave
 Content-Type: application/json
 
 {
-  "leaveID": "L001"
+  "leaveID": "LV1006"
 }
 
-### Approve Leave Request with wrong ID
+### APPROVE LEAVE REQUEST WITH INVALID ID
 POST http://localhost:4004/odata/v4/leave-management/approveLeave
 Content-Type: application/json
 
@@ -91,18 +118,31 @@ Content-Type: application/json
   "leaveID": "INVALID_ID"
 }
 
-### Reject Leave Request
+### REJECT LEAVE REQUEST
 POST http://localhost:4004/odata/v4/leave-management/rejectLeave
 Content-Type: application/json
- 
+
 {
-  "leaveID": "L001"
+  "leaveID": "LV1007"
 }
 
-### Reject Leave Request with wrong ID
+### REJECT LEAVE REQUEST WITH INVALID ID
 POST http://localhost:4004/odata/v4/leave-management/rejectLeave
 Content-Type: application/json
- 
+
 {
   "leaveID": "INVALID_ID"
+}
+
+### GET INDIVIDUAL EMPLOYEE LEAVES
+GET http://localhost:4004/odata/v4/leave-management/getEmployeeLeaves(employeeID='EMP1001')
+Content-Type: application/json
+
+### CHANGE LEAVE STATUS
+POST http://localhost:4004/odata/v4/leave-management/changeLeaveStatus
+Content-Type: application/json
+
+{
+  "leaveID": "LV1002",
+  "status": "Rejected"
 }
