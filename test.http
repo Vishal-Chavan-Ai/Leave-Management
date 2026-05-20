@@ -40,7 +40,7 @@ Content-Type: application/json
   "EndDate": "2026-05-22",
   "Reason": "Medical Leave",
   "AppliedOn": "2026-05-19",
-  "employee_ID": "<employee-guid>"
+  "employee_ID": "EMP1001"
 }
 
 ### Create Leave Request without Reason
@@ -53,7 +53,7 @@ Content-Type: application/json
   "EndDate": "2026-05-22",
   "Reason": "",
   "AppliedOn": "2026-05-19",
-  "employee_ID": "<employee-guid>"
+  "employee_ID": "EMP1001"
 }
 
 ### Update Leave Request
@@ -72,7 +72,7 @@ Content-Type: application/json
   "EndDate": "2026-05-20",
   "Reason": "Medical Leave",
   "AppliedOn": "2026-05-19",
-  "employee_ID": "<employee-guid>"
+  "employee_ID": "EMP1001"
 }
 
 ### Approve Leave Request
