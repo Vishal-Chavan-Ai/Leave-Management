@@ -2,7 +2,7 @@
 
 # Project Overview
 
-Simple Leave Management Backend Application using the SAP Cloud Application Programming Model (CAP) on SAP BTP. The application allows employees to apply for leave and enables administrators/managers to approve or reject leave requests.
+Simple Leave Management Backend Application using the SAP Cloud Application Programming Model (CAP) on SAP BTP. The application allows employees to apply for leave and enables admin to approve or reject leave requests.
 
 The application demonstrates:
 
@@ -83,16 +83,6 @@ leave-management/
 
 # CDS Data Modeling
 
-## Namespace
-
-```cds
-namespace leave.management;
-```
-
----
-
-# Entities
-
 ## Employee Entity
 
 ```cds
@@ -133,20 +123,6 @@ entity LeaveRequest : cuid, managed
 | Status    | LeaveStatus |
 | AppliedOn | Date        |
 | employee  | Association |
-
----
-
-# Enum Type
-
-## LeaveStatus
-
-```cds
-type LeaveStatus : String enum {
-    Pending;
-    Approved;
-    Rejected;
-}
-```
 
 ---
 
@@ -300,16 +276,6 @@ const existingEmployee = await SELECT.one
 ```
 
 Prevents duplicate employee records.
-
----
-
-# PATCH Request Handling
-
-```http
-PATCH /LeaveRequests(<UUID>)
-```
-
-Supports partial updates while preserving existing data validations.
 
 ---
 
@@ -480,44 +446,6 @@ The application uses XSUAA for authentication and role-based authorization.
 | -------- | ------------------------------ |
 | Employee | Create and view leave requests |
 | Admin    | Approve/reject leave requests  |
-
----
-
-# SAP HANA Cloud Integration
-
-The application is deployed to SAP HANA Cloud using an HDI Container.
-
-### Database Binding
-
-```bash
-cds bind --to <hdi-container>
-```
-
----
-
-# Deployment Steps
-
-## Build Project
-
-```bash
-cds build
-```
-
----
-
-## Build MTA Archive
-
-```bash
-mbt build
-```
-
----
-
-## Deploy Application
-
-```bash
-cf deploy mta_archives/leave-management_1.0.0.mtar
-```
 
 ---
 
