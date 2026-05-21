@@ -4,18 +4,12 @@ module.exports = cds.service.impl(function () {
 
     const { Employees, LeaveRequests } = this.entities;
 
-    // ======================================================
     // VALIDATIONS
-    // ======================================================
-
     this.before(['CREATE', 'UPDATE'], LeaveRequests, async (req) => {
 
         const data = req.data;
 
-        // ==================================================
-        // PATCH FIX
-        // ==================================================
-
+        // PATCH REQUESTS
         let existingLeave = null;
 
         if (req.event === 'UPDATE') {
@@ -33,10 +27,7 @@ module.exports = cds.service.impl(function () {
         const reason = data.Reason || existingLeave?.Reason;
         const employeeID = data.employee_ID || existingLeave?.employee_ID;
 
-        // ==================================================
         // EMPLOYEE VALIDATION
-        // ==================================================
-
         if (!employeeID) {
             req.error(400, 'Employee ID is mandatory');
         }
@@ -49,29 +40,20 @@ module.exports = cds.service.impl(function () {
             req.error(404, 'Employee not found');
         }
 
-        // ==================================================
         // DATE VALIDATION
-        // ==================================================
-
         if (startDate && endDate) {
             if (new Date(endDate) < new Date(startDate)) {
                 req.error(400, 'EndDate cannot be earlier than StartDate');
             }
         }
 
-        // ==================================================
         // REASON VALIDATION
-        // ==================================================
-
         if (!reason || reason.trim() === '') {
             req.error(400, 'Reason is mandatory');
         }
     });
 
-    // ======================================================
     // EMPLOYEE UNIQUENESS
-    // ======================================================
-
     this.before('CREATE', Employees, async (req) => {
 
         const existingEmployee = await SELECT.one
@@ -83,10 +65,7 @@ module.exports = cds.service.impl(function () {
         }
     });
 
-    // ======================================================
     // Duplicate Leave IDs
-    // ======================================================
-
     this.before('CREATE', LeaveRequests, async (req) => {
 
         const existingLeave = await SELECT.one
@@ -98,10 +77,7 @@ module.exports = cds.service.impl(function () {
         }
     });
 
-    // ======================================================
     // APPROVE LEAVE
-    // ======================================================
-
     this.on('approveLeave', async (req) => {
 
         const { leaveID } = req.data;
@@ -121,10 +97,7 @@ module.exports = cds.service.impl(function () {
         return `Leave ${leaveID} approved`;
     });
 
-    // ======================================================
     // REJECT LEAVE
-    // ======================================================
-
     this.on('rejectLeave', async (req) => {
 
         const { leaveID } = req.data;
@@ -144,10 +117,7 @@ module.exports = cds.service.impl(function () {
         return `Leave ${leaveID} rejected`;
     });
 
-    // ======================================================
     // CHANGE STATUS
-    // ======================================================
-
     this.on('changeLeaveStatus', async (req) => {
 
         const { leaveID, status } = req.data;
@@ -173,20 +143,14 @@ module.exports = cds.service.impl(function () {
         return `Leave ${leaveID} changed to ${status}`;
     });
 
-    // ======================================================
     // GET PENDING LEAVES
-    // ======================================================
-
     this.on('getPendingLeaves', async () => {
 
         return await SELECT.from(LeaveRequests)
             .where({ Status: 'Pending' });
     });
 
-    // ======================================================
     // GET EMPLOYEE LEAVES
-    // ======================================================
-
     this.on('getEmployeeLeaves', async (req) => {
 
         const { employeeID } = req.data;
