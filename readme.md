@@ -2,7 +2,7 @@
 
 # Project Overview
 
-Simple Leave Management Backend Application using the SAP Cloud Application Programming Model (CAP) on SAP BTP. The application allows employees to apply for leave and enables admin to approve or reject leave requests.
+Simple Leave Management Backend Application using the **SAP Cloud Application Programming Model (CAPM)** on SAP BTP. The application allows employees to apply for leave and enables admin to approve or reject leave requests.
 
 The application demonstrates:
 
